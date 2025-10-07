@@ -164,27 +164,193 @@ src/
 └── index.css           # Global styles and Tailwind imports
 ```
 
-### **🧠 Smart Matching Algorithm**
+### **🧠 Smart Matching Algorithm - Technical Details**
 
-The app uses a custom fuzzy matching system:
+The app implements a custom fuzzy matching system with these key functions:
 
-1. **Text Normalization**: 
-   - Trims whitespace
-   - Converts to lowercase
-   - Removes punctuation
-   - Collapses multiple spaces
+#### **1. Text Normalization (`normalize()`)**
+```typescript
+function normalize(text: string): string {
+  return text
+    .trim()                    // Remove leading/trailing spaces
+    .toLowerCase()             // Convert to lowercase
+    .replace(/\s+/g, ' ')      // Collapse multiple spaces to single space
+    .replace(/[.,!?;:]+$/, ''); // Remove trailing punctuation
+}
+```
+**Example**: `"  ION!!  "` → `"ion"`
 
-2. **Plural Handling**: 
-   - Strips "s" or "es" endings
-   - "ions" becomes "ion" for matching
+#### **2. Plural Stripping (`stripPlural()`)**
+```typescript
+function stripPlural(s: string): string {
+  if (s.endsWith('es')) return s.slice(0, -2);  // "atoms" → "atom"
+  if (s.endsWith('s')) return s.slice(0, -1);   // "ions" → "ion"
+  return s;  // No change if doesn't end with 's'
+}
+```
+**Example**: `"ions"` → `"ion"`, `"charged atoms"` → `"charged atom"`
 
-3. **Levenshtein Distance**: 
-   - Calculates minimum edit distance
-   - Allows 1-2 character differences
+#### **3. Levenshtein Distance (`levenshtein()`)**
+```typescript
+function levenshtein(a: string, b: string): number {
+  // Dynamic programming matrix to calculate minimum edit distance
+  // Returns number of character insertions, deletions, or substitutions needed
+}
+```
+**Examples**:
+- `levenshtein("ion", "iin")` = `1` (1 substitution: o→i)
+- `levenshtein("atom", "atoms")` = `1` (1 insertion: +s)
+- `levenshtein("ion", "iron")` = `2` (1 insertion: +r, 1 substitution: o→n)
 
-4. **Smart Tolerance**: 
-   - Short answers (≤3 chars) get stricter matching
-   - Prevents over-acceptance of wrong answers
+#### **4. Smart Acceptance (`isAcceptable()`)**
+```typescript
+function isAcceptable(student: string, correct: string, allowPlural: boolean, maxDist: number): boolean {
+  const studentNorm = normalize(student);
+  const correctNorm = normalize(correct);
+  
+  // 1. Exact match after normalization
+  if (studentNorm === correctNorm) return true;
+  
+  // 2. Plural/singular match
+  if (allowPlural) {
+    const studentStripped = stripPlural(studentNorm);
+    const correctStripped = stripPlural(correctNorm);
+    if (studentStripped === correctStripped) return true;
+  }
+  
+  // 3. Levenshtein distance check
+  const distance = levenshtein(studentNorm, correctNorm);
+  const effectiveMaxDist = correctNorm.length <= 3 ? Math.min(maxDist, 1) : maxDist;
+  
+  return distance <= effectiveMaxDist;
+}
+```
+
+#### **5. Multi-Answer Evaluation (`evaluateAnswer()`)**
+```typescript
+function evaluateAnswer(studentAnswer: string, config: QuestionConfig): GradeReport {
+  // For each correct answer:
+  // 1. Calculate Levenshtein distance
+  // 2. Track the best match (lowest distance)
+  // 3. Check if any answer passes isAcceptable()
+  // 4. Return detailed report with best match info
+}
+```
+
+### **🎯 Matching Logic Flow**
+
+1. **Input**: Student types `"iin"`, Correct answers: `["ion", "charged atom"]`
+2. **Normalize**: `"iin"` → `"iin"`, `"ion"` → `"ion"`
+3. **Check exact match**: `"iin" !== "ion"` ❌
+4. **Check plural**: `stripPlural("iin")` = `"iin"`, `stripPlural("ion")` = `"ion"` ❌
+5. **Calculate distance**: `levenshtein("iin", "ion")` = `1`
+6. **Check tolerance**: `1 <= 1` ✅ **ACCEPTED!**
+
+### **⚙️ Configuration Defaults**
+- `allowPlural: true` - Automatically enabled
+- `typoTolerance: 1` - Allows 1 character difference
+- **Smart rule**: For answers ≤3 characters, max tolerance is clamped to 1
+
+### **💻 Implementation Guide for Developers**
+
+If you want to implement similar matching in your own project:
+
+#### **Step 1: Create the Core Functions**
+```typescript
+// 1. Text normalization
+function normalize(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.,!?;:]+$/, '');
+}
+
+// 2. Plural stripping
+function stripPlural(s: string): string {
+  if (s.endsWith('es')) return s.slice(0, -2);
+  if (s.endsWith('s')) return s.slice(0, -1);
+  return s;
+}
+
+// 3. Levenshtein distance (dynamic programming)
+function levenshtein(a: string, b: string): number {
+  const matrix: number[][] = [];
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          matrix[i][j - 1] + 1,     // insertion
+          matrix[i - 1][j] + 1      // deletion
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+```
+
+#### **Step 2: Create the Matching Logic**
+```typescript
+function isAcceptable(student: string, correct: string, allowPlural: boolean = true, maxDist: number = 1): boolean {
+  const studentNorm = normalize(student);
+  const correctNorm = normalize(correct);
+  
+  // Exact match
+  if (studentNorm === correctNorm) return true;
+  
+  // Plural handling
+  if (allowPlural && stripPlural(studentNorm) === stripPlural(correctNorm)) return true;
+  
+  // Distance check
+  const distance = levenshtein(studentNorm, correctNorm);
+  const effectiveMaxDist = correctNorm.length <= 3 ? Math.min(maxDist, 1) : maxDist;
+  
+  return distance <= effectiveMaxDist;
+}
+```
+
+#### **Step 3: Handle Multiple Correct Answers**
+```typescript
+function evaluateAnswer(studentAnswer: string, correctAnswers: string[]): {
+  correct: boolean;
+  bestMatch: string | null;
+  distance: number | null;
+} {
+  let bestMatch: { answer: string; distance: number } | null = null;
+  let isCorrect = false;
+  
+  for (const correctAnswer of correctAnswers) {
+    const distance = levenshtein(normalize(studentAnswer), normalize(correctAnswer));
+    
+    if (!bestMatch || distance < bestMatch.distance) {
+      bestMatch = { answer: correctAnswer, distance };
+    }
+    
+    if (isAcceptable(studentAnswer, correctAnswer)) {
+      isCorrect = true;
+    }
+  }
+  
+  return {
+    correct: isCorrect,
+    bestMatch: bestMatch?.answer || null,
+    distance: bestMatch?.distance || null
+  };
+}
+```
+
+#### **Step 4: Usage Example**
+```typescript
+// Test the matching
+const result = evaluateAnswer("iin", ["ion", "charged atom"]);
+console.log(result); // { correct: true, bestMatch: "ion", distance: 1 }
+```
 
 ### **Development Commands**
 ```bash
