@@ -6,44 +6,16 @@
 [![Vite](https://img.shields.io/badge/Vite-5.0.8-646CFF.svg)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3.6-38B2AC.svg)](https://tailwindcss.com/)
 
-## 🎯 What is this app?
+## 🎯 What is this?
 
-**Exaim** is an interactive fill-in-the-blank quiz application that lets teachers create questions and students take them. The magic happens in the **smart answer matching** - it understands typos, handles plural/singular forms, and gives helpful feedback.
+A **fill-in-the-blank quiz prototype** with intelligent answer matching. The core innovation is the **smart matching algorithm** that handles typos, plural forms, and provides flexible answer evaluation.
 
-### 🎓 Perfect for:
-- **Teachers** creating educational quizzes
-- **Students** practicing with immediate feedback
-- **Anyone** wanting to test knowledge with flexible answer matching
-
-### 🧠 How it works:
-1. **Create**: Teachers write questions with blanks (like "A ______ is an atom that loses electrons")
-2. **Answer**: Students fill in the blanks
-3. **Smart Check**: The app intelligently matches answers, accepting small typos and variations
-4. **Feedback**: Students get instant results with detailed explanations
-
-## ✨ Key Features
-
-### 🎯 **Smart Answer Matching**
-- **Typo-friendly**: Accepts answers with 1-2 character mistakes
-- **Plural handling**: "ion" and "ions" are both correct
-- **Flexible matching**: "charged atom" matches "charged atoms"
-- **Case insensitive**: "ION" = "ion" = "Ion"
-
-### 🎨 **Beautiful Interface**
-- **Modern design** with smooth animations
-- **Two simple tabs**: Create Question | Take Quiz
-- **Instant feedback** with color-coded results
-- **Mobile-friendly** responsive design
-
-### 💾 **Persistent Storage**
-- **Saves questions** automatically in your browser
-- **No backend needed** - everything runs locally
-- **Works offline** once loaded
-
-### 📊 **Detailed Feedback**
-- Shows **exactly why** an answer was right or wrong
-- Displays **similarity percentage** and edit distance
-- **"Almost there!"** hints for close answers
+**Key Features:**
+- Smart fuzzy matching with Levenshtein distance
+- Automatic plural/singular handling
+- Typo tolerance (1-2 character differences)
+- Multiple correct answers support
+- Real-time feedback with detailed matching info
 
 ## Tech Stack
 
@@ -76,149 +48,78 @@
 ### Option 2: Try it Online
 Visit the live demo (if deployed) or clone and run locally to see it in action!
 
-## 📖 How to Use
+## 🧪 Example Matching
 
-### 👨‍🏫 **For Teachers: Create Questions**
+**Question:** `"A ______ is an atom that loses or gains electrons."`  
+**Correct Answers:** `["ion", "charged atom"]`
 
-1. **Go to "Create Question" tab**
-2. **Write your question** with underscores for blanks:
-   ```
-   A ______ is an atom that loses or gains electrons.
-   ```
-3. **Add correct answers** (separate multiple answers with commas):
-   ```
-   ion, charged atom
-   ```
-4. **Click "Save Question"** - that's it!
+| Student Input | Result | Distance | Why |
+|---------------|--------|----------|-----|
+| `ion` | ✅ Correct | 0 | Exact match |
+| `ions` | ✅ Correct | 0 | Plural handling |
+| `iin` | ✅ Correct | 1 | 1 typo allowed |
+| `charged aton` | ✅ Correct | 1 | 1 typo allowed |
+| `iron` | ❌ Incorrect | 2 | Too different |
 
-### 👨‍🎓 **For Students: Take Quiz**
+## 🏗️ Code Structure
 
-1. **Go to "Take Quiz" tab**
-2. **Read the question** carefully
-3. **Type your answer** in the input field
-4. **Click "Check Answer"** for instant feedback
-
-### 🎯 **What You'll See:**
-
-- ✅ **Correct!** - Your answer matches perfectly
-- ⚠️ **Almost there!** - Close but not quite right
-- ❌ **Incorrect** - Try again with a different approach
-
-**Plus detailed info showing:**
-- How your answer was processed
-- Which correct answer it matched best
-- Similarity percentage and edit distance
-
-## 🧪 Try These Examples
-
-### **Sample Question:**
-```
-A ______ is an atom that loses or gains electrons.
-```
-
-### **Correct Answers:**
-```
-ion, charged atom
-```
-
-### **Test These Student Answers:**
-
-| Student Input | Result | Why |
-|---------------|--------|-----|
-| `ion` | ✅ **Correct** | Exact match |
-| `ions` | ✅ **Correct** | Plural handling |
-| `ION` | ✅ **Correct** | Case insensitive |
-| `iin` | ✅ **Correct** | 1 typo allowed |
-| `charged atom` | ✅ **Correct** | Exact match |
-| `charged atoms` | ✅ **Correct** | Plural handling |
-| `charged aton` | ✅ **Correct** | 1 typo allowed |
-| `iron` | ❌ **Incorrect** | Too different |
-| `atom` | ❌ **Incorrect** | Wrong concept |
-
-### 🎯 **The Magic:**
-- **Smart matching** handles typos and variations
-- **Plural/singular** forms are automatically accepted
-- **Case doesn't matter** - all answers are normalized
-- **Multiple correct answers** - any one will work
-
-## 🏗️ For Developers
-
-### **Project Structure**
 ```
 src/
-├── components/          # Reusable UI components
-│   ├── Button.tsx      # Custom button component
-│   ├── Card.tsx        # Card container component
-│   ├── Input.tsx       # Form input component
-│   ├── Select.tsx      # Dropdown component
-│   └── Toggle.tsx      # Toggle switch component
-├── lib/                # Core utilities
-│   ├── match.ts        # Smart string matching algorithms
-│   └── storage.ts      # Browser storage helpers
-├── pages/              # Main application pages
-│   ├── CreateQuestion.tsx  # Question creation form
-│   └── TakeQuiz.tsx        # Quiz taking interface
-├── types.ts            # TypeScript type definitions
-├── App.tsx             # Main application component
-├── main.tsx            # Application entry point
-└── index.css           # Global styles and Tailwind imports
+├── lib/
+│   ├── match.ts        # Core matching algorithms
+│   └── storage.ts      # localStorage helpers
+├── pages/
+│   ├── CreateQuestion.tsx
+│   └── TakeQuiz.tsx
+├── components/         # UI components
+├── types.ts           # TypeScript definitions
+└── App.tsx            # Main app
 ```
 
-### **🧠 Smart Matching Algorithm - Technical Details**
+## 🧠 Core Matching Logic
 
-The app implements a custom fuzzy matching system with these key functions:
+### **Key Functions:**
 
-#### **1. Text Normalization (`normalize()`)**
+#### **1. Text Normalization**
 ```typescript
 function normalize(text: string): string {
-  return text
-    .trim()                    // Remove leading/trailing spaces
-    .toLowerCase()             // Convert to lowercase
-    .replace(/\s+/g, ' ')      // Collapse multiple spaces to single space
-    .replace(/[.,!?;:]+$/, ''); // Remove trailing punctuation
+  return text.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.,!?;:]+$/, '');
 }
+// "  ION!!  " → "ion"
 ```
-**Example**: `"  ION!!  "` → `"ion"`
 
-#### **2. Plural Stripping (`stripPlural()`)**
+#### **2. Plural Handling**
 ```typescript
 function stripPlural(s: string): string {
-  if (s.endsWith('es')) return s.slice(0, -2);  // "atoms" → "atom"
-  if (s.endsWith('s')) return s.slice(0, -1);   // "ions" → "ion"
-  return s;  // No change if doesn't end with 's'
+  if (s.endsWith('es')) return s.slice(0, -2);
+  if (s.endsWith('s')) return s.slice(0, -1);
+  return s;
 }
+// "ions" → "ion", "charged atoms" → "charged atom"
 ```
-**Example**: `"ions"` → `"ion"`, `"charged atoms"` → `"charged atom"`
 
-#### **3. Levenshtein Distance (`levenshtein()`)**
+#### **3. Levenshtein Distance**
 ```typescript
 function levenshtein(a: string, b: string): number {
-  // Dynamic programming matrix to calculate minimum edit distance
-  // Returns number of character insertions, deletions, or substitutions needed
+  // Dynamic programming matrix for edit distance
+  // Returns minimum insertions/deletions/substitutions needed
 }
+// levenshtein("ion", "iin") = 1
 ```
-**Examples**:
-- `levenshtein("ion", "iin")` = `1` (1 substitution: o→i)
-- `levenshtein("atom", "atoms")` = `1` (1 insertion: +s)
-- `levenshtein("ion", "iron")` = `2` (1 insertion: +r, 1 substitution: o→n)
 
-#### **4. Smart Acceptance (`isAcceptable()`)**
+#### **4. Main Matching Logic**
 ```typescript
-function isAcceptable(student: string, correct: string, allowPlural: boolean, maxDist: number): boolean {
+function isAcceptable(student: string, correct: string, allowPlural: boolean = true, maxDist: number = 1): boolean {
   const studentNorm = normalize(student);
   const correctNorm = normalize(correct);
   
-  // 1. Exact match after normalization
+  // 1. Exact match
   if (studentNorm === correctNorm) return true;
   
-  // 2. Plural/singular match
-  if (allowPlural) {
-    const studentStripped = stripPlural(studentNorm);
-    const correctStripped = stripPlural(correctNorm);
-    if (studentStripped === correctStripped) return true;
-  }
+  // 2. Plural handling
+  if (allowPlural && stripPlural(studentNorm) === stripPlural(correctNorm)) return true;
   
-  // 3. Levenshtein distance check
+  // 3. Distance check
   const distance = levenshtein(studentNorm, correctNorm);
   const effectiveMaxDist = correctNorm.length <= 3 ? Math.min(maxDist, 1) : maxDist;
   
@@ -226,50 +127,17 @@ function isAcceptable(student: string, correct: string, allowPlural: boolean, ma
 }
 ```
 
-#### **5. Multi-Answer Evaluation (`evaluateAnswer()`)**
+### **Matching Flow:**
+1. Normalize both strings
+2. Check exact match
+3. Check plural/singular match
+4. Calculate Levenshtein distance
+5. Apply tolerance rules
+
+## 💻 Complete Implementation
+
+### **Full Levenshtein Distance Algorithm:**
 ```typescript
-function evaluateAnswer(studentAnswer: string, config: QuestionConfig): GradeReport {
-  // For each correct answer:
-  // 1. Calculate Levenshtein distance
-  // 2. Track the best match (lowest distance)
-  // 3. Check if any answer passes isAcceptable()
-  // 4. Return detailed report with best match info
-}
-```
-
-### **🎯 Matching Logic Flow**
-
-1. **Input**: Student types `"iin"`, Correct answers: `["ion", "charged atom"]`
-2. **Normalize**: `"iin"` → `"iin"`, `"ion"` → `"ion"`
-3. **Check exact match**: `"iin" !== "ion"` ❌
-4. **Check plural**: `stripPlural("iin")` = `"iin"`, `stripPlural("ion")` = `"ion"` ❌
-5. **Calculate distance**: `levenshtein("iin", "ion")` = `1`
-6. **Check tolerance**: `1 <= 1` ✅ **ACCEPTED!**
-
-### **⚙️ Configuration Defaults**
-- `allowPlural: true` - Automatically enabled
-- `typoTolerance: 1` - Allows 1 character difference
-- **Smart rule**: For answers ≤3 characters, max tolerance is clamped to 1
-
-### **💻 Implementation Guide for Developers**
-
-If you want to implement similar matching in your own project:
-
-#### **Step 1: Create the Core Functions**
-```typescript
-// 1. Text normalization
-function normalize(text: string): string {
-  return text.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.,!?;:]+$/, '');
-}
-
-// 2. Plural stripping
-function stripPlural(s: string): string {
-  if (s.endsWith('es')) return s.slice(0, -2);
-  if (s.endsWith('s')) return s.slice(0, -1);
-  return s;
-}
-
-// 3. Levenshtein distance (dynamic programming)
 function levenshtein(a: string, b: string): number {
   const matrix: number[][] = [];
   for (let i = 0; i <= b.length; i++) {
@@ -295,27 +163,7 @@ function levenshtein(a: string, b: string): number {
 }
 ```
 
-#### **Step 2: Create the Matching Logic**
-```typescript
-function isAcceptable(student: string, correct: string, allowPlural: boolean = true, maxDist: number = 1): boolean {
-  const studentNorm = normalize(student);
-  const correctNorm = normalize(correct);
-  
-  // Exact match
-  if (studentNorm === correctNorm) return true;
-  
-  // Plural handling
-  if (allowPlural && stripPlural(studentNorm) === stripPlural(correctNorm)) return true;
-  
-  // Distance check
-  const distance = levenshtein(studentNorm, correctNorm);
-  const effectiveMaxDist = correctNorm.length <= 3 ? Math.min(maxDist, 1) : maxDist;
-  
-  return distance <= effectiveMaxDist;
-}
-```
-
-#### **Step 3: Handle Multiple Correct Answers**
+### **Multi-Answer Evaluation:**
 ```typescript
 function evaluateAnswer(studentAnswer: string, correctAnswers: string[]): {
   correct: boolean;
@@ -345,47 +193,21 @@ function evaluateAnswer(studentAnswer: string, correctAnswers: string[]): {
 }
 ```
 
-#### **Step 4: Usage Example**
+### **Usage:**
 ```typescript
-// Test the matching
 const result = evaluateAnswer("iin", ["ion", "charged atom"]);
-console.log(result); // { correct: true, bestMatch: "ion", distance: 1 }
+// { correct: true, bestMatch: "ion", distance: 1 }
 ```
 
-### **Development Commands**
+## 🚀 Development
+
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run preview  # Preview production build
-npm run lint     # Check code quality
+npm install    # Install dependencies
+npm run dev    # Start development server
+npm run build  # Build for production
+npm run lint   # Check code quality
 ```
-
-### **Browser Support**
-Works in all modern browsers that support ES2020 and React 18.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### **Ideas for Contributions:**
-- Add more question types (multiple choice, true/false)
-- Implement question categories or tags
-- Add export/import functionality
-- Create a question bank/library
-- Add user authentication
-- Implement scoring systems
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with modern web technologies for optimal performance
-- Implements custom fuzzy matching algorithms (no external dependencies)
-- Designed with accessibility and user experience in mind
-- Perfect for educational use cases and learning environments
-
----
-
-**Made with ❤️ for educators and learners everywhere!**
+MIT License - see [LICENSE](LICENSE) file for details.
