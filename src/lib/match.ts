@@ -152,6 +152,6 @@ export function evaluateAnswer(
     bestAnswer: bestMatch?.answer || null,
     distance: bestMatch?.distance || null,
     similarityPct: bestMatch?.similarity || null,
-    almost: almostCorrect
+    almost: almostCorrect || false
   };
 }
