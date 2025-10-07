@@ -40,11 +40,11 @@
     "fuzzy-matching",
     "levenshtein-distance"
   ],
-  "author": "Your Name",
+  "author": "clarkkent12667",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/exaim-fill-in-prototype.git"
+    "url": "https://github.com/clarkkent12667/exaim-fill-in-prototype.git"
   },
-  "homepage": "https://github.com/yourusername/exaim-fill-in-prototype#readme"
+  "homepage": "https://github.com/clarkkent12667/exaim-fill-in-prototype#readme"
 }
